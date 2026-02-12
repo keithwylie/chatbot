@@ -251,73 +251,6 @@
                 opacity: 1;
             }
         }
-
-        .condition-indicator {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 12px;
-            z-index: 1000;
-        }
-
-        /* Admin panel for researchers */
-        .admin-toggle {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            background: #34495e;
-            color: white;
-            padding: 8px 15px;
-            border-radius: 5px;
-            font-size: 11px;
-            cursor: pointer;
-            z-index: 1000;
-        }
-
-        .admin-panel {
-            position: fixed;
-            bottom: 50px;
-            right: 10px;
-            background: white;
-            border: 2px solid #34495e;
-            border-radius: 8px;
-            padding: 15px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 1000;
-            min-width: 250px;
-        }
-
-        .admin-panel h4 {
-            margin-bottom: 10px;
-            color: #2c3e50;
-        }
-
-        .admin-panel button {
-            margin: 5px 0;
-            padding: 8px 15px;
-            width: 100%;
-            background: #3498db;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .admin-panel button:hover {
-            background: #2980b9;
-        }
-
-        .session-info {
-            font-size: 12px;
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid #e0e0e0;
-            color: #7f8c8d;
-        }
     </style>
 </head>
 <body>
@@ -390,8 +323,6 @@
             const [messages, setMessages] = useState([]);
             const [input, setInput] = useState('');
             const [isTyping, setIsTyping] = useState(false);
-            const [showAdmin, setShowAdmin] = useState(false);
-            const [showCondition, setShowCondition] = useState(false);
             const [currentMessageState, setCurrentMessageState] = useState(null); // 'searching', 'sources', 'complete'
             const chatContainerRef = useRef(null);
 
@@ -520,26 +451,6 @@
                 setInput('');
             };
 
-            const switchCondition = () => {
-                // Condition is hardcoded for this version
-                alert('This is the Sam (Transparency) version. Condition cannot be changed.');
-            };
-
-            const exportData = () => {
-                const data = {
-                    condition: condition ? 'transparency' : 'no_transparency',
-                    assistantName: assistantName,
-                    messages: messages,
-                    timestamp: new Date().toISOString()
-                };
-                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `chat-data-${assistantName}-${Date.now()}.json`;
-                a.click();
-            };
-
             const sampleQuestions = [
                 "What is photosynthesis?",
                 "What is the role of enhancers in gene expression?",
@@ -635,33 +546,6 @@
                             </button>
                         </div>
                     </div>
-
-                    {/* Admin controls for researchers */}
-                    <div className="admin-toggle" onClick={() => setShowAdmin(!showAdmin)}>
-                        Researcher Controls
-                    </div>
-
-                    {showAdmin && (
-                        <div className="admin-panel">
-                            <h4>Admin Panel - Sam Version</h4>
-                            <button onClick={resetChat}>Reset Chat</button>
-                            <button onClick={exportData}>Export Data (JSON)</button>
-                            <button onClick={() => setShowCondition(!showCondition)}>
-                                {showCondition ? 'Hide' : 'Show'} Condition
-                            </button>
-                            <div className="session-info">
-                                <strong>Assistant:</strong> Sam<br/>
-                                <strong>Condition:</strong> Transparency<br/>
-                                <strong>Messages:</strong> {messages.length}
-                            </div>
-                        </div>
-                    )}
-
-                    {showCondition && (
-                        <div className="condition-indicator">
-                            Condition: Transparency (Sam)
-                        </div>
-                    )}
                 </div>
             );
         }
