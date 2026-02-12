@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant Study</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 3px solid #34495e;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 500;
+        }
+
+        .assistant-name {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #fafafa;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .message.assistant {
+            display: flex;
+            justify-content: flex-start;
+        }
+
+        .message-content {
+            max-width: 75%;
+            padding: 15px 20px;
+            border-radius: 12px;
+            line-height: 1.6;
+        }
+
+        .message.user .message-content {
+            background: #3498db;
+            color: white;
+        }
+
+        .message.assistant .message-content {
+            background: white;
+            color: #2c3e50;
+            border: 1px solid #e0e0e0;
+        }
+
+        .source-block {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #0d47a1;
+        }
+
+        .source-header {
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        .source-icon {
+            margin-right: 8px;
+        }
+
+        .source-content {
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        
+        .source-item {
+            margin: 5px 0;
+            padding-left: 10px;
+            border-left: 3px solid #2196f3;
+        }
+
+        .input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-field {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .send-button {
+            padding: 15px 30px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .send-button:hover {
+            background: #2980b9;
+        }
+
+        .send-button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .welcome-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: #7f8c8d;
+        }
+
+        .welcome-message h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .sample-questions {
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        .sample-questions h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .question-item {
+            background: white;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .question-item:hover {
+            border-color: #3498db;
+            transform: translateX(5px);
+        }
+
+        .typing-indicator {
+            display: inline-flex;
+            gap: 4px;
+            padding: 15px 20px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #bdc3c7;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.7;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+
+        .condition-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 1000;
+        }
+
+        /* Admin panel for researchers */
+        .admin-toggle {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: #34495e;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 11px;
+            cursor: pointer;
+            z-index: 1000;
+        }
+
+        .admin-panel {
+            position: fixed;
+            bottom: 50px;
+            right: 10px;
+            background: white;
+            border: 2px solid #34495e;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            min-width: 250px;
+        }
+
+        .admin-panel h4 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .admin-panel button {
+            margin: 5px 0;
+            padding: 8px 15px;
+            width: 100%;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .admin-panel button:hover {
+            background: #2980b9;
+        }
+
+        .session-info {
+            font-size: 12px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e0e0e0;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // Knowledge base with biology questions and answers
+        const knowledgeBase = {
+            "what is photosynthesis": {
+                sources: "Searching academic sources...\n\nSources consulted:\n• Campbell Biology, 11th Edition (Urry et al., 2017), Chapter 10: Photosynthesis\n• \"Mechanisms of Photosynthesis\" - Annual Review of Plant Biology (2016)\n• Principles of Biochemistry by Lehninger (2021), pp. 745-768",
+                answer: "Photosynthesis is the process by which plants, algae, and some bacteria convert light energy into chemical energy stored in glucose. It occurs in two main stages:\n\n1. Light-dependent reactions (in the thylakoid membranes): Light energy is captured by chlorophyll and converted into ATP and NADPH, with oxygen released as a byproduct from the splitting of water molecules.\n\n2. Light-independent reactions or Calvin cycle (in the stroma): ATP and NADPH are used to fix carbon dioxide into glucose through a series of enzymatic reactions.\n\nThe overall equation is: 6CO₂ + 6H₂O + light energy → C₆H₁₂O₆ + 6O₂"
+            },
+            "explain cellular respiration": {
+                sources: "Searching academic sources...\n\nSources consulted:\n• Molecular Biology of the Cell, 6th Edition (Alberts et al., 2015), Chapter 13\n• Berg, J.M., et al. (2019). Biochemistry, 9th Edition - Section on Cellular Respiration\n• Journal of Biological Chemistry: \"ATP Synthesis Mechanisms\" (2018)",
+                answer: "Cellular respiration is the process by which cells break down glucose to produce ATP (adenosine triphosphate), the cell's energy currency. It consists of three main stages:\n\n1. Glycolysis (cytoplasm): One glucose molecule is broken down into two pyruvate molecules, producing a net gain of 2 ATP and 2 NADH.\n\n2. Krebs cycle/Citric acid cycle (mitochondrial matrix): Pyruvate is further broken down, releasing CO₂ and producing 2 ATP, 6 NADH, and 2 FADH₂ per glucose.\n\n3. Electron transport chain (inner mitochondrial membrane): NADH and FADH₂ donate electrons, creating a proton gradient that drives ATP synthesis. This produces approximately 32-34 ATP.\n\nTotal yield: ~36-38 ATP per glucose molecule in aerobic conditions. The overall equation is essentially the reverse of photosynthesis."
+            },
+            "what is mitosis": {
+                sources: "Searching academic sources...\n\nSources consulted:\n• Lodish, H., et al. (2016). Molecular Cell Biology, 8th Edition, Chapter 18: Cell Division\n• Nature Reviews Molecular Cell Biology: \"The Cell Cycle\" (2017)\n• Essential Cell Biology, 5th Edition (Alberts et al., 2019), pp. 617-642",
+                answer: "Mitosis is a type of cell division that produces two genetically identical daughter cells from a single parent cell. It's essential for growth, tissue repair, and asexual reproduction. The process consists of several phases:\n\n1. Prophase: Chromatin condenses into visible chromosomes (each consisting of two sister chromatids), and the nuclear envelope breaks down. The mitotic spindle begins to form.\n\n2. Metaphase: Chromosomes align at the cell's equator (metaphase plate), attached to spindle fibers at their centromeres.\n\n3. Anaphase: Sister chromatids separate and move to opposite poles of the cell.\n\n4. Telophase: Nuclear envelopes reform around each set of chromosomes, which begin to decondense.\n\n5. Cytokinesis: The cytoplasm divides, producing two separate cells.\n\nEach daughter cell receives an identical copy of the parent cell's DNA, maintaining the same chromosome number."
+            },
+            "what is dna replication": {
+                sources: "Searching academic sources...\n\nSources consulted:\n• Watson, J.D., et al. (2014). Molecular Biology of the Gene, 7th Edition, Chapter 9\n• \"DNA Replication and Repair\" - Science Magazine (2019)\n• Genetics: From Genes to Genomes (Hartwell et al., 2018), pp. 201-234",
+                answer: "DNA replication is the process by which a cell copies its DNA before cell division, ensuring each daughter cell receives a complete set of genetic information. It follows a semiconservative model, where each new DNA molecule consists of one original strand and one newly synthesized strand.\n\nKey steps:\n\n1. Initiation: Helicase unwinds the double helix at origins of replication, creating a replication fork.\n\n2. Elongation:\n   - Leading strand: DNA polymerase synthesizes continuously in the 5' to 3' direction\n   - Lagging strand: Synthesized discontinuously as Okazaki fragments, also in the 5' to 3' direction\n   - Primase creates RNA primers to initiate synthesis\n   - DNA ligase joins Okazaki fragments together\n\n3. Termination: Replication continues until the entire molecule is copied.\n\nProofreading mechanisms ensure high accuracy, with error rates of about 1 in 10 billion nucleotides."
+            },
+            "explain natural selection": {
+                sources: "Searching academic sources...\n\nSources consulted:\n• Darwin, C. (1859). On the Origin of Species - Modern annotated edition (2020)\n• Futuyma, D.J. & Kirkpatrick, M. (2017). Evolution, 4th Edition, Chapter 11\n• Trends in Ecology & Evolution: \"Modern Synthesis of Natural Selection\" (2018)",
+                answer: "Natural selection is the primary mechanism of evolution, proposed by Charles Darwin. It explains how populations change over time through differential survival and reproduction. The process requires four conditions:\n\n1. Variation: Individuals in a population have different traits (phenotypes).\n\n2. Heritability: These traits are at least partially heritable and can be passed to offspring.\n\n3. Differential reproduction: Some variants are better suited to their environment and have higher survival and reproductive success (fitness).\n\n4. Accumulation: Over generations, advantageous traits become more common in the population.\n\nExample: In a population of beetles, some are green and some are brown. If birds preferentially prey on green beetles because they're easier to spot, brown beetles will have higher survival rates. Over time, the brown trait becomes more prevalent in the population.\n\nNatural selection doesn't produce 'perfect' organisms—it only favors traits that confer reproductive advantages in a specific environment."
+            },
+            "what is a gene": {
+                sources: "Searching academic sources...\n\nSources consulted:\n• Griffiths, A.J.F., et al. (2015). Introduction to Genetic Analysis, 11th Edition\n• Nature Genetics: \"What is a Gene? Revisited\" (2019)\n• Klug, W.S., et al. (2019). Concepts of Genetics, 12th Edition, Chapter 3",
+                answer: "A gene is a fundamental unit of heredity—a specific sequence of DNA that contains the instructions for making a functional product, typically a protein or RNA molecule. Genes are segments of DNA located on chromosomes.\n\nKey characteristics:\n\n1. Structure: A gene includes not only the coding sequence (exons) but also regulatory regions (promoters, enhancers) and non-coding sequences (introns in eukaryotes).\n\n2. Function: Through transcription and translation, genes direct protein synthesis, which determines traits and cellular functions.\n\n3. Alleles: Different versions of the same gene are called alleles. For example, a gene for eye color might have a brown allele and a blue allele.\n\n4. Expression: Not all genes are active all the time. Gene expression is regulated based on cell type, developmental stage, and environmental signals.\n\nThe human genome contains approximately 20,000-25,000 protein-coding genes, though only about 1.5% of our DNA actually codes for proteins. The relationship between genotype (genetic makeup) and phenotype (observable traits) is complex and influenced by gene interactions and environment."
+            },
+            "explain protein synthesis": {
+                sources: "Searching academic sources...\n\nSources consulted:\n• Cooper, G.M. & Hausman, R.E. (2016). The Cell: A Molecular Approach, 7th Edition\n• Cold Spring Harbor Perspectives in Biology: \"Protein Synthesis and Ribosome Structure\" (2019)\n• Molecular Biology Textbook (Weaver, 2018), Chapter 17: Translation",
+                answer: "Protein synthesis is the process by which cells create proteins based on genetic instructions. It occurs in two main stages:\n\n1. Transcription (in the nucleus):\n   - RNA polymerase binds to a gene's promoter region\n   - The DNA double helix unwinds\n   - RNA polymerase synthesizes a complementary mRNA strand using the DNA template\n   - In eukaryotes, the pre-mRNA is processed (5' cap, 3' poly-A tail, splicing to remove introns)\n   - Mature mRNA exits the nucleus\n\n2. Translation (on ribosomes in the cytoplasm):\n   - Initiation: The ribosome binds to the mRNA at the start codon (AUG)\n   - Elongation: tRNA molecules bring amino acids corresponding to each mRNA codon. The ribosome catalyzes peptide bonds between adjacent amino acids\n   - Termination: When a stop codon is reached, the completed polypeptide chain is released\n\nThe genetic code is read in triplets (codons), with each three-nucleotide sequence specifying one amino acid. The resulting polypeptide then folds into its functional three-dimensional structure."
+            },
+            "what is homeostasis": {
+                sources: "Searching academic sources...\n\nSources consulted:\n• Silverthorn, D.U. (2019). Human Physiology: An Integrated Approach, 8th Edition\n• American Journal of Physiology: \"Principles of Homeostatic Control\" (2017)\n• Marieb, E.N. & Hoehn, K. (2019). Human Anatomy & Physiology, 11th Edition, Chapter 1",
+                answer: "Homeostasis is the process by which organisms maintain stable internal conditions despite changes in the external environment. It's essential for survival, as most biological processes require specific conditions to function properly.\n\nKey aspects regulated:\n- Body temperature\n- Blood pH\n- Blood glucose levels\n- Water and electrolyte balance\n- Blood pressure\n\nMechanism: Most homeostatic processes use negative feedback loops:\n1. A sensor detects a change from the set point\n2. A control center processes this information\n3. An effector produces a response that counteracts the original change\n\nExample - Temperature regulation:\n- If body temperature rises: Sensors in the skin and hypothalamus detect the change. The hypothalamus triggers responses like sweating and vasodilation (blood vessels near skin surface dilate), which cool the body.\n- If body temperature falls: The hypothalamus triggers shivering and vasoconstriction, generating and conserving heat.\n\nPositive feedback loops (like blood clotting or childbirth) are less common and amplify rather than counteract changes."
+            },
+            "explain enzyme function": {
+                sources: "Searching academic sources...\n\nSources consulted:\n• Nelson, D.L. & Cox, M.M. (2017). Lehninger Principles of Biochemistry, 7th Edition, Chapter 6\n• Biochemical Journal: \"Enzyme Catalysis and Regulation\" (2020)\n• Voet, D. & Voet, J.G. (2016). Biochemistry, 5th Edition, pp. 359-412",
+                answer: "Enzymes are biological catalysts—proteins that speed up chemical reactions without being consumed in the process. They're essential for nearly all metabolic processes in cells.\n\nHow enzymes work:\n\n1. Active site: Each enzyme has a specific three-dimensional active site where substrate molecules bind.\n\n2. Induced fit model: When a substrate binds, the enzyme undergoes a slight conformational change that positions catalytic residues optimally, lowering the activation energy needed for the reaction.\n\n3. Product formation: The enzyme facilitates bond breaking/forming, then releases products and returns to its original state, ready to catalyze another reaction.\n\nKey properties:\n- Specificity: Each enzyme typically catalyzes only one type of reaction\n- Efficiency: Can increase reaction rates by factors of millions\n- Regulation: Activity can be modulated by inhibitors, activators, pH, and temperature\n\nFactors affecting enzyme activity:\n- Temperature: Activity increases with temperature until denaturation occurs\n- pH: Each enzyme has an optimal pH; extreme values cause denaturation\n- Substrate concentration: Reaction rate increases until all enzyme active sites are saturated\n- Inhibitors: Competitive (compete with substrate for active site) or non-competitive (bind elsewhere, changing enzyme shape)"
+            },
+            "what is evolution": {
+                sources: "Searching academic sources...\n\nSources consulted:\n• Freeman, S. & Herron, J.C. (2014). Evolutionary Analysis, 5th Edition\n• Proceedings of the National Academy of Sciences: \"Evidence for Evolution\" (2019)\n• Campbell Biology (Urry et al., 2017), Unit 4: Evolution and Ecology",
+                answer: "Evolution is the change in the heritable characteristics of populations over successive generations. It's both a well-established scientific fact (species change over time) and a unifying theory explaining biodiversity and adaptation.\n\nKey mechanisms:\n\n1. Natural selection: Differential survival and reproduction based on fitness\n2. Genetic drift: Random changes in allele frequencies, especially significant in small populations\n3. Mutation: The ultimate source of new genetic variation\n4. Gene flow: Movement of alleles between populations through migration\n5. Non-random mating: Patterns like inbreeding or sexual selection\n\nEvidence for evolution:\n- Fossil record showing transitional forms\n- Comparative anatomy (homologous structures)\n- Molecular biology (DNA/protein sequence similarities)\n- Biogeography (species distribution patterns)\n- Direct observation (antibiotic resistance, selective breeding)\n\nMicroevolution refers to small-scale changes within populations (like antibiotic resistance), while macroevolution involves larger-scale changes leading to new species over long time periods.\n\nImportant note: Evolution has no direction or goal—it's not progress toward 'better' organisms, but simply adaptation to current environmental conditions."
+            }
+        };
+
+        function ResearchChatbot() {
+            const [messages, setMessages] = useState([]);
+            const [input, setInput] = useState('');
+            const [isTyping, setIsTyping] = useState(false);
+            const [showAdmin, setShowAdmin] = useState(false);
+            const [showCondition, setShowCondition] = useState(false);
+            const chatContainerRef = useRef(null);
+
+            // Randomly assign condition on mount (transparency: true = Sam, false = Alex)
+            const [condition, setCondition] = useState(() => {
+                const savedCondition = sessionStorage.getItem('chatbotCondition');
+                if (savedCondition !== null) {
+                    return JSON.parse(savedCondition);
+                }
+                const newCondition = Math.random() < 0.5;
+                sessionStorage.setItem('chatbotCondition', JSON.stringify(newCondition));
+                return newCondition;
+            });
+
+            const assistantName = condition ? 'Sam' : 'Alex';
+            const showSources = condition; // Sam shows sources, Alex doesn't
+
+            useEffect(() => {
+                if (chatContainerRef.current) {
+                    chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+                }
+            }, [messages, isTyping]);
+
+            const findBestMatch = (userInput) => {
+                const input = userInput.toLowerCase().trim();
+                
+                // Direct match
+                if (knowledgeBase[input]) {
+                    return knowledgeBase[input];
+                }
+
+                // Fuzzy matching - check if input contains key phrases
+                for (const [key, value] of Object.entries(knowledgeBase)) {
+                    const keywords = key.split(' ');
+                    if (keywords.every(keyword => input.includes(keyword))) {
+                        return value;
+                    }
+                }
+
+                // Check if any key is contained in the input
+                for (const [key, value] of Object.entries(knowledgeBase)) {
+                    if (input.includes(key)) {
+                        return value;
+                    }
+                }
+
+                return null;
+            };
+
+            const handleSend = async () => {
+                if (!input.trim()) return;
+
+                const userMessage = input.trim();
+                setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+                setInput('');
+                setIsTyping(true);
+
+                // Simulate thinking/processing time
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                const match = findBestMatch(userMessage);
+                
+                let responseMessage;
+                if (match) {
+                    responseMessage = {
+                        role: 'assistant',
+                        content: match.answer,
+                        sources: showSources ? match.sources : null
+                    };
+                } else {
+                    responseMessage = {
+                        role: 'assistant',
+                        content: "I don't have specific information about that topic in my current knowledge base. I'm designed to answer questions about fundamental biology concepts like photosynthesis, cellular respiration, mitosis, DNA replication, natural selection, genes, protein synthesis, homeostasis, enzyme function, and evolution. Could you try asking about one of these topics?",
+                        sources: showSources ? "Searching for relevant information...\n\nNo matching sources found in my current knowledge base for this query." : null
+                    };
+                }
+
+                setIsTyping(false);
+                setMessages(prev => [...prev, responseMessage]);
+            };
+
+            const handleKeyPress = (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                }
+            };
+
+            const handleSampleQuestion = (question) => {
+                setInput(question);
+            };
+
+            const resetChat = () => {
+                setMessages([]);
+                setInput('');
+            };
+
+            const switchCondition = () => {
+                const newCondition = !condition;
+                setCondition(newCondition);
+                sessionStorage.setItem('chatbotCondition', JSON.stringify(newCondition));
+                resetChat();
+            };
+
+            const exportData = () => {
+                const data = {
+                    condition: condition ? 'transparency' : 'no_transparency',
+                    assistantName: assistantName,
+                    messages: messages,
+                    timestamp: new Date().toISOString()
+                };
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `chat-data-${assistantName}-${Date.now()}.json`;
+                a.click();
+            };
+
+            const sampleQuestions = [
+                "What is photosynthesis?",
+                "Explain cellular respiration",
+                "What is mitosis?",
+                "Explain natural selection"
+            ];
+
+            return (
+                <div className="app-container">
+                    <div className="header">
+                        <h1>Research Assistant</h1>
+                        <div className="assistant-name">Your assistant: {assistantName}</div>
+                    </div>
+
+                    <div className="chat-container" ref={chatContainerRef}>
+                        {messages.length === 0 ? (
+                            <div className="welcome-message">
+                                <h2>Hello! I'm {assistantName}</h2>
+                                <p>I'm here to help you learn about biology concepts. Feel free to ask me questions!</p>
+                                
+                                <div className="sample-questions">
+                                    <h3>Try asking about:</h3>
+                                    {sampleQuestions.map((question, idx) => (
+                                        <div 
+                                            key={idx}
+                                            className="question-item"
+                                            onClick={() => handleSampleQuestion(question)}
+                                        >
+                                            {question}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            messages.map((message, idx) => (
+                                <div key={idx} className={`message ${message.role}`}>
+                                    <div className="message-content">
+                                        {message.sources && (
+                                            <div className="source-block">
+                                                <div className="source-header">
+                                                    <span className="source-icon">📚</span>
+                                                    Sources consulted:
+                                                </div>
+                                                <div className="source-content">{message.sources}</div>
+                                            </div>
+                                        )}
+                                        {message.content}
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                        
+                        {isTyping && (
+                            <div className="message assistant">
+                                <div className="typing-indicator">
+                                    <div className="typing-dot"></div>
+                                    <div className="typing-dot"></div>
+                                    <div className="typing-dot"></div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="input-container">
+                        <div className="input-wrapper">
+                            <input
+                                type="text"
+                                className="input-field"
+                                placeholder="Type your question here..."
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                onKeyPress={handleKeyPress}
+                                disabled={isTyping}
+                            />
+                            <button 
+                                className="send-button"
+                                onClick={handleSend}
+                                disabled={isTyping || !input.trim()}
+                            >
+                                Send
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Admin controls for researchers */}
+                    <div className="admin-toggle" onClick={() => setShowAdmin(!showAdmin)}>
+                        Researcher Controls
+                    </div>
+
+                    {showAdmin && (
+                        <div className="admin-panel">
+                            <h4>Admin Panel</h4>
+                            <button onClick={switchCondition}>
+                                Switch to {condition ? 'Alex (No Transparency)' : 'Sam (Transparency)'}
+                            </button>
+                            <button onClick={resetChat}>Reset Chat</button>
+                            <button onClick={exportData}>Export Data (JSON)</button>
+                            <button onClick={() => setShowCondition(!showCondition)}>
+                                {showCondition ? 'Hide' : 'Show'} Condition
+                            </button>
+                            <div className="session-info">
+                                <strong>Current:</strong> {assistantName}<br/>
+                                <strong>Condition:</strong> {condition ? 'Transparency' : 'No Transparency'}<br/>
+                                <strong>Messages:</strong> {messages.length}
+                            </div>
+                        </div>
+                    )}
+
+                    {showCondition && (
+                        <div className="condition-indicator">
+                            Condition: {condition ? 'Transparency (Sam)' : 'No Transparency (Alex)'}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<ResearchChatbot />);
+    </script>
+</body>
+</html>
